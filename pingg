@@ -1,0 +1,232 @@
+from tkinter import *
+import random
+
+Width = 900
+Height = 400
+
+W = 10
+H = 100
+
+Ball_r = 20
+
+Bal_x = 20
+Bal_y = 20
+
+Player_1 = 0
+Player_2 = 0
+
+Initial = 20
+
+root = Tk()
+root.title("Пинг-понг")
+
+c = Canvas(root, width = Width, height = Height, background="#008000")
+c.pack()
+
+c.create_line(W, 0, W, Height, fill = "#FFFF00")
+
+c.create_line(Width - W, 0, Width - W, Height, fill="#FFFF00")
+
+Pad_sp = 20
+leet_pad = 0
+
+Richt_pad = 0
+Ball_s = 1.00
+
+Ball_max_s = 30
+
+Speed_x = 20
+
+Speed_y = 20
+
+right_line_distance = Width - W
+
+
+p_1_text = c.create_text(Width - Width / 6, H / 4,
+                         text='',
+                         font="Arial 20",
+                         fill="white")
+
+p_2_text = c.create_text(Width / 6, H / 4,
+                         text='',
+                         font="Arial 20",
+                         fill="white")
+
+
+def end1(p_1_text):
+    global Player_1, Player_2
+    if Player_1 == 25:
+        p_1_text = c.create_text(Width - Width / 6, H / 4,
+                                 text="Вы выиграли!",
+                                 font="Arial 20",
+                                 fill="white")
+    if Player_1 < 25:
+        p_1_text = p_1_text
+
+    return p_1_text
+
+
+def end2(p_2_text):
+    if Player_2 == 25:
+        p_2_text = c.create_text(Width / 6, H / 4,
+                                 text="Вы выиграли ",
+                                 font="Arial 20",
+                                 fill="white")
+
+    if Player_2 < 25:
+        p_2_text = p_2_text
+
+    return p_2_text
+
+
+def update_score(player):
+    account = ''
+    global Player_1, Player_2, GAME_START
+    if player == "right":
+        Player_1 += 1
+        account = c.itemconfig(p_1_text, text=Player_1)
+        if Player_1 == 10:
+            account = c.itemconfig(p_1_text, text='Вы выиграли!!!')
+            GAME_START = False
+            Player_1 = 0
+            Player_2 = 0
+    else:
+        Player_2 += 1
+        account = c.itemconfig(end2(p_2_text), text=Player_2)
+        if Player_2 == 10:
+            account = c.itemconfig(p_2_text, text="Вы выиграли!!!")
+            GAME_START = False
+            Player_1 = 0
+            Player_2 = 0
+
+    return account
+
+def spawn_ball():
+    global Speed_x
+    c.coords(BALL, Width / 2 - Ball_r, Height / 2 - Ball_r, Width / 2 + Ball_r, Height / 2 + Ball_r)
+    Speed_x = -(Speed_x * -Initial) / abs(Speed_x)
+
+def bounce(action):
+    global Speed_x, Speed_y
+    if action == 'strike':
+        Speed_y = random.randrange(-10, 10)
+        if abs(Speed_x) < Ball_max_s:
+            Speed_x *= -Ball_s
+        else:
+            Speed_x = -Speed_x
+    else:
+        Speed_y = -Speed_y
+
+def move_ball():
+    ball_left, ball_top, ball_right, ball_bot = c.coords(BALL)
+    ball_center = (ball_top + ball_bot) / 2
+    if ball_right + Speed_x < right_line_distance and ball_left + Speed_x > W:
+        c.move(BALL, Speed_x, Speed_y)
+    elif ball_right == right_line_distance or ball_left == W:
+        if ball_right > Width / 2:
+            if c.coords(RIGHT_PAD)[1] < ball_center < c.coords(RIGHT_PAD)[3]:
+                bounce("strike")
+            else:
+                update_score("left")
+                spawn_ball()
+        else:
+            if c.coords(LEET_PAD)[1] < ball_center < c.coords(LEET_PAD)[3]:
+                bounce('strike')
+            else:
+                update_score("right")
+                spawn_ball()
+    else:
+        if ball_right > Width / 2:
+            c.move(BALL, right_line_distance - ball_right, Speed_y)
+        else:
+            c.move(BALL, -ball_left + W, Speed_y)
+    if ball_top + Speed_y < 0 or ball_bot + Speed_y > Height:
+        bounce("ricochet")
+
+
+c.create_line(Width / 2, 0, Width / 2, Height, fill="#FFFF00")
+
+BALL = c.create_oval(Width / 2 - Ball_r, Height / 2 - Ball_r, Width / 2 + Ball_r,
+                     Height / 2 + Ball_r, fill="#FFFFFF")
+
+
+LEET_PAD = c.create_line(W / 2, 0, W / 2, H, width=W, fill='#FFFFFF')
+
+RIGHT_PAD = c.create_line(Width - W / 2, 0, Width - W / 2, H, width=W, fill='#FFFFFF')
+
+
+
+def move_pads():
+
+    PADS = {LEET_PAD: leet_pad,
+            RIGHT_PAD: Richt_pad}
+    #
+    for pad in PADS:
+
+        c.move(pad, 0, PADS[pad])
+
+        if c.coords(pad)[1] < 0:
+            c.move(pad, 0, -c.coords(pad)[1])
+        elif c.coords(pad)[3] > Height:
+            c.move(pad, 0, Height - c.coords(pad)[3])
+
+
+GAME_START = False
+
+
+def main():
+    global GAME_START
+    if GAME_START:
+        move_ball()
+        move_pads()
+        root.after(30, main)
+
+
+c.focus_set()
+
+
+def move_handler(event):
+    global leet_pad, Richt_pad
+
+    if event.keysym == 'w':
+        leet_pad = -Pad_sp
+    elif event.keysym == 's':
+        leet_pad = Pad_sp
+    elif event.keysym == "Up":
+        Richt_pad = -Pad_sp
+    elif event.keysym == "Down":
+        Richt_pad = Pad_sp
+
+c.bind('<KeyPress>', move_handler)
+
+def stop_pad(event):
+    global leet_pad, Richt_pad
+    if event.keysym in 'ws':
+        leet_pad = 0
+    elif event.keysym in ("Up", 'Down'):
+        Richt_pad = 0
+
+
+c.bind("<KeyRelease>", stop_pad)
+
+root.geometry("1000x600")
+
+
+def b1():
+    global GAME_START
+    if not GAME_START:
+        GAME_START = True
+        main()
+
+
+def b2():
+    global GAME_START
+    GAME_START = False
+    root.destroy()
+
+
+Button(text="Старт", command=b1).pack()
+
+Button(text="Выйти из игры", command=b2).pack()
+
+root.mainloop()
