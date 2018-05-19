@@ -117,7 +117,7 @@ def bounce(action):
     else:
         Speed_y = -Speed_y
 
-def move_ball():
+def m_b():
     ball_left, ball_top, ball_right, ball_bot = c.coords(BALL)
     ball_center = (ball_top + ball_bot) / 2
     if ball_right + Speed_x < right_line_distance and ball_left + Speed_x > W:
@@ -177,7 +177,7 @@ GAME_START = False
 def main():
     global GAME_START
     if GAME_START:
-        move_ball()
+        m_b()
         move_pads()
         root.after(30, main)
 
